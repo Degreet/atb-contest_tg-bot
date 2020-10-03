@@ -20,18 +20,78 @@ class SceneGen {
       } else if (username.includes("/")) {
         sendMsg(ctx, `В логине "<b>${username}</b>" используются недопустимые символы.`)
       } {
+        sendMsg(ctx, `<b>${username}</b>, Вы были успешно зарегистрированы!`)
+
+        let collectedCards = 0
+        const reged = await users.find().toArray()
+        if (!reged.length) {
+          await ctx.replyWithPhoto({ source: "img/cards/otal.jpg" })
+          sendMsg(ctx, `Так как вы являетесь первым пользователем, вы получаете карту "Отал" бесплатно! Чтобы узнать как забрать карту, воспользуйтесь командой "/getcard".`)
+          collectedCards = 1
+        }
+
         await users.insertOne({
           userId,
-          username
+          username,
+          collectedCards
         })
 
-        sendMsg(ctx, `<b>${username}</b>, Вы были успешно зарегистрированы!`)
+        sendMsg(ctx, `Ожидай конкурсов.`)
+        setInterval(checker, 10000, ctx)
         ctx.scene.leave()
       }
     })
 
     return reg
   }
+}
+
+async function checker(ctx) {
+  const userId = ctx.from.id
+  const candidate = await getCandidate({ userId })
+
+  if (candidate) {
+    const username = candidate.username
+    const articles = await contests.find().toArray()
+    const article = articles[0]
+
+    if (article) {
+      const nowDate = new Date()
+      const endDate = new Date(article.dateEnd)
+      const checkDate = nowDate.getDate() > endDate.getDate()
+        || nowDate.getMonth() > endDate.getMonth()
+        || nowDate.getFullYear() > endDate.getFullYear()
+        || nowDate.getHours() > endDate.getHours()
+
+      if (!checkDate) {
+        let checked = false
+        article.checked.forEach(name => name == username ? checked = true : "")
+        const gifts = article.content
+
+        if (!checked) {
+          sendMsg(ctx, `
+Привет, <b>${username}</b>!
+Начался новый конкурс!
+Призы: ${formatGifts(gifts)}.
+Чтобы участвовать, введи /go.
+          `)
+
+          article.checked.push(username)
+          await contests.updateOne({ _id: article._id }, { $set: { checked: article.checked } })
+        }
+      }
+    }
+  }
+}
+
+function formatGifts(gifts) {
+  return gifts.join(", ")
+    .replace(/magar/g, "Магар")
+    .replace(/ledi/g, "Леди орейн")
+    .replace(/haos/g, "Хаос")
+    .replace(/heming/g, "Хэминг")
+    .replace(/orion/g, "ОРИОН")
+    .replace(/card/g, "1 карта")
 }
 
 async function getCandidate(data) {

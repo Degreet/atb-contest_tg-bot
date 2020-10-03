@@ -29,6 +29,8 @@ bot.command("start", async ctx => {
   const userId = ctx.from.id
   const candidate = await getCandidate({ userId })
 
+  await ctx.replyWithPhoto({ source: "img/logo.png" })
+
   if (candidate) {
     const username = candidate.username
     sendMsg(ctx, `С возвращением, <b>${username}</b>!`)
@@ -37,6 +39,10 @@ bot.command("start", async ctx => {
     ctx.scene.enter("reg")
   }
 })
+
+function buildPath(path) {
+  return `${__dirname}/${path}`
+}
 
 function sendMsg(ctx, text, markup = []) {
   return ctx.replyWithHTML(text, setMarkup(markup))
@@ -54,5 +60,6 @@ async function getCandidate(data) {
 client.connect(err => {
   if (err) console.log(err)
   global.users = client.db("atb-contest-tg-bot").collection("users")
+  global.contests = client.db("atb-contest-tg-bot").collection("contests")
   bot.launch()
 })
