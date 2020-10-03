@@ -19,11 +19,39 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 const TOKEN = process.env.TOKEN
 const bot = new Telegraf(TOKEN)
 
-bot.command("start", ctx => {
-  ctx.reply("Привет!")
+const curScenes = new SceneGen()
+const regScene = curScenes.registration()
+const stage = new Stage([regScene])
+bot.use(session())
+bot.use(stage.middleware())
+
+bot.command("start", async ctx => {
+  const userId = ctx.from.id
+  const candidate = await getCandidate({ userId })
+
+  if (candidate) {
+    const username = candidate.username
+    sendMsg(ctx, `С возвращением, <b>${username}</b>!`)
+  } else {
+    sendMsg(ctx, `Привет, новичок!`)
+    ctx.scene.enter("reg")
+  }
 })
 
-client.connect((err) => {
+function sendMsg(ctx, text, markup = []) {
+  return ctx.replyWithHTML(text, setMarkup(markup))
+}
+
+function setMarkup(markup) {
+  return Markup.keyboard(markup).oneTime().resize().extra();
+}
+
+async function getCandidate(data) {
+  const { userId, username } = data
+  return await users.findOne(userId ? { userId } : username ? { username } : { userId: "dsahfiuo3189hnsak" })
+}
+
+client.connect(err => {
   if (err) console.log(err)
   global.users = client.db("atb-contest-tg-bot").collection("users")
   bot.launch()
