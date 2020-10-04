@@ -13,6 +13,7 @@ dotenv.config()
 
 const KEY = process.env.KEY
 const { MongoClient, ObjectId, BSONType } = require("mongodb")
+const { send } = require("process")
 const uri = `mongodb+srv://Node:${KEY}@cluster0-ttfss.mongodb.net/atb-contest-tg-bot?retryWrites=true&w=majority`
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true })
 
@@ -29,10 +30,18 @@ adminBot.on("message", async ctx => {
     try {
       const userId = Number(msg.replace("/unset_win ", ""))
       await users.updateOne({ userId }, { $set: { win: false } })
-      ctx.reply("Успешно сделано!")
+      sendMsg(ctx, "Успешно сделано!")
     } catch {
-      ctx.reply("Ошибка.")
+      sendMsg(ctx, "Ошибка.")
     }
+  } else if (msg.startsWith("/ban ")) {
+    const userId = Number(msg.slice(5, 14))
+    const msgToBan = msg.slice(15)
+    const candidate = await getCandidate({ userId })
+
+    await users.deleteOne({ userId })
+    bot.telegram.sendMessage(userId, `Привет, ${candidate.username}! Ваш аккаунт был удалён по причине: "${msgToBan}". Чтобы начать всё снова, введите /start`)
+    sendMsg(ctx, `Успешно сделано!`)
   } else {
     ctx.reply("Неизвестная команда.")
   }
@@ -52,7 +61,7 @@ bot.command("start", async ctx => {
 
   if (candidate) {
     const username = candidate.username
-    sendMsg(ctx, `С возвращением, <b>${username}</b>!`)
+    sendMsg(ctx, `С возвращением, <>${username}</>!`)
   } else {
     sendMsg(ctx, `Привет, новичок!`)
     ctx.scene.enter("reg")
