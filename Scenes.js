@@ -21,12 +21,13 @@ class SceneGen {
         sendMsg(ctx, `В логине "<b>${username}</b>" используются недопустимые символы.`)
       } {
         sendMsg(ctx, `<b>${username}</b>, Вы были успешно зарегистрированы!`)
+        adminBot.telegram.sendMessage(582824629, `Новый пользователь: ${username}[${userId}].`)
 
         let collectedCards = 0
         const reged = await users.find().toArray()
         if (!reged.length) {
           await ctx.replyWithPhoto({ source: "img/cards/otal.jpg" })
-          sendMsg(ctx, `Так как вы являетесь первым пользователем, вы получаете карту "Отал" бесплатно! Чтобы узнать как забрать карту, воспользуйтесь командой "/getcard".`)
+          sendMsg(ctx, `Так как вы являетесь первым пользователем, вы получаете карту "Отал" бесплатно! Чтобы узнать как забрать карту, воспользуйтесь командой /getcard.`)
           collectedCards = 1
         }
 
@@ -37,7 +38,7 @@ class SceneGen {
         })
 
         sendMsg(ctx, `Ожидай конкурсов.`)
-        setInterval(checker, 10000, ctx)
+        await checker(ctx)
         ctx.scene.leave()
       }
     })
@@ -52,8 +53,7 @@ async function checker(ctx) {
 
   if (candidate) {
     const username = candidate.username
-    const articles = await contests.find().toArray()
-    const article = articles[0]
+    const article = await getContest()
 
     if (article) {
       const nowDate = new Date()
@@ -82,6 +82,8 @@ async function checker(ctx) {
       }
     }
   }
+
+  setTimeout(checker, 10000, ctx)
 }
 
 function formatGifts(gifts) {
@@ -92,6 +94,11 @@ function formatGifts(gifts) {
     .replace(/heming/g, "Хэминг")
     .replace(/orion/g, "ОРИОН")
     .replace(/card/g, "1 карта")
+}
+
+async function getContest() {
+  const articles = await contests.find().toArray()
+  return articles[0]
 }
 
 async function getCandidate(data) {
