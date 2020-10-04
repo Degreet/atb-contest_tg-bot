@@ -17,7 +17,7 @@ class SceneGen {
 
       if (candidate) {
         sendMsg(ctx, `Логин <b>${username}</b> уже занят. Попробуйте другой.`)
-      } else if (username.includes("/")) {
+      } else if (username.startsWith("/")) {
         sendMsg(ctx, `В логине "<b>${username}</b>" используются недопустимые символы.`)
       } {
         sendMsg(ctx, `<b>${username}</b>, Вы были успешно зарегистрированы!`)
