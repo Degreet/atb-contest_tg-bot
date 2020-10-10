@@ -3,10 +3,6 @@ const Extra = require("telegraf/extra")
 const Markup = require("telegraf/markup")
 const { Stage, session } = Telegraf
 const SceneGen = require("./Scenes")
-const http = require("http")
-
-const server = http.createServer((req, resp) => resp.end("Error #404"))
-server.listen(process.env.PORT || 3000)
 
 const dotenv = require("dotenv")
 dotenv.config()
