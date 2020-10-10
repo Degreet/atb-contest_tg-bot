@@ -19,7 +19,7 @@ class SceneGen {
         sendMsg(ctx, `Логин <b>${username}</b> уже занят. Попробуйте другой.`)
       } else if (username.startsWith("/")) {
         sendMsg(ctx, `В логине "<b>${username}</b>" используются недопустимые символы.`)
-      } {
+      } else {
         sendMsg(ctx, `<b>${username}</b>, Вы были успешно зарегистрированы!`)
         adminBot.telegram.sendMessage(582824629, `Новый пользователь: ${username}[${userId}].`)
 
