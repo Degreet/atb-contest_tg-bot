@@ -79,11 +79,9 @@ bot.on("message", async ctx => {
         const winFormated = formatGift(win)
         await ctx.replyWithPhoto({ source: `img/cards/${win.replace("-", "")}.jpg` })
         await users.updateOne({ userId }, { $set: { win, collectedCards: candidate.collectedCards + 1 } })
-        sendMsg(ctx, `Ваша награда: <b>${winFormated}</b>. Чтобы узнать как забрать/отдать приз, введите /getcard.`)
+        sendMsg(ctx, `Ваша награда: <b>${winFormated}</b>`)
         adminBot.telegram.sendMessage(582824629, `Игрок ${candidate.username}[${userId}] получил ${winFormated}.`)
       }
-    } else if (msg == "/getcard") {
-      sendMsg(ctx, `Чтобы получить карту, ты должен прийти к 103 школе к 6Г классу, и на перемене узнать у "Жайворонка/Войцеховского" на счёт карты.`)
     } else if (msg == "/check") {
       await checker(ctx)
     } else {
