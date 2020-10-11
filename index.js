@@ -167,8 +167,6 @@ async function checker(ctx) {
       return `На данный момент конкурсов нет`
     }
   }
-
-  return ``
 }
 
 function formatGifts(gifts) {
@@ -179,6 +177,7 @@ function formatGifts(gifts) {
     .replace(/heming/g, "Хэминг")
     .replace(/orion/g, "ОРИОН")
     .replace(/card/g, "1 карта")
+    .replace(/rokethover/g, "Рокет и Ховер")
 }
 
 function rndGift(contest) {
@@ -194,6 +193,7 @@ function formatGift(gift) {
     .replace(/heming/g, "Хэминг")
     .replace(/orion/g, "ОРИОН")
     .replace(/card/g, "1 карта")
+    .replace(/rokethover/g, "Рокет и Ховер")
 }
 
 async function getContest() {

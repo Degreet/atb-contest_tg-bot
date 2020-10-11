@@ -27,7 +27,7 @@ class SceneGen {
         const reged = await users.find().toArray()
         if (!reged.length) {
           await ctx.replyWithPhoto({ source: "img/cards/otal.jpg" })
-          sendMsg(ctx, `Так как вы являетесь первым пользователем, вы получаете карту "Отал" бесплатно! Чтобы узнать как забрать карту, воспользуйтесь командой /getcard.`)
+          sendMsg(ctx, `Так как вы являетесь первым пользователем, вы получаете карту "Отал" бесплатно!`)
           collectedCards = 1
         }
 
@@ -107,6 +107,7 @@ function formatGifts(gifts) {
     .replace(/heming/g, "Хэминг")
     .replace(/orion/g, "ОРИОН")
     .replace(/card/g, "1 карта")
+    .replace(/rokethover/g, "Рокет и Ховер")
 }
 
 async function getContest() {
