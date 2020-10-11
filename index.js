@@ -24,8 +24,12 @@ adminBot.on("message", async ctx => {
 
   if (msg.startsWith("/unset_win ")) {
     try {
-      const userId = Number(msg.replace("/unset_win ", ""))
-      await users.updateOne({ userId }, { $set: { win: false } })
+      const idOrAll = msg.replace("/unset_win ", "")
+      const userId = Number(idOrAll)
+
+      if (idOrAll == "*") await users.updateMany({ win: true }, { $set: { win: false } })
+      else await users.updateOne({ userId }, { $set: { win: false } })
+
       sendMsg(ctx, "Успешно сделано!")
     } catch {
       sendMsg(ctx, "Ошибка.")
@@ -75,15 +79,30 @@ bot.on("message", async ctx => {
         sendMsg(ctx, `На данный момент новых конкурсов не имеется.`)
       } else {
         const article = await getContest()
-        const win = rndGift(article)
-        const winFormated = formatGift(win)
-        await ctx.replyWithPhoto({ source: `img/cards/${win.replace("-", "")}.jpg` })
-        await users.updateOne({ userId }, { $set: { win, collectedCards: candidate.collectedCards + 1 } })
-        sendMsg(ctx, `Ваша награда: <b>${winFormated}</b>`)
-        adminBot.telegram.sendMessage(582824629, `Игрок ${candidate.username}[${userId}] получил ${winFormated}.`)
+
+        const nowDate = new Date()
+        const startDate = new Date(article.dateStart)
+
+        const checkStartDate =
+          nowDate.getDate() >= startDate.getDate() &&
+          nowDate.getMonth() >= startDate.getMonth() &&
+          nowDate.getFullYear() >= startDate.getFullYear() &&
+          nowDate.getHours() >= startDate.getHours()
+
+        if (checkStartDate) {
+          const win = rndGift(article)
+          const winFormated = formatGift(win)
+          await ctx.replyWithPhoto({ source: `img/cards/${win.replace("-", "")}.jpg` })
+          await users.updateOne({ userId }, { $set: { win: true, collectedCards: candidate.collectedCards + 1 } })
+          sendMsg(ctx, `Ваша награда: <b>${winFormated}</b>`)
+          adminBot.telegram.sendMessage(582824629, `Игрок ${candidate.username}[${userId}] получил ${winFormated}.`)
+        } else {
+          sendMsg(ctx, `На данный момент новых конкурсов не имеется.`)
+        }
       }
     } else if (msg == "/check") {
-      await checker(ctx)
+      const msg = await checker(ctx)
+      sendMsg(ctx, msg)
     } else {
       sendMsg(ctx, `Неизвестная команда.`)
     }
@@ -94,39 +113,62 @@ async function checker(ctx) {
   const userId = ctx.from.id
   const candidate = await getCandidate({ userId })
 
+  setTimeout(checker, 10000, ctx)
+
   if (candidate) {
     const username = candidate.username
     const article = await getContest()
 
     if (article) {
       const nowDate = new Date()
-      const endDate = new Date(article.dateEnd)
-      const checkDate = nowDate.getDate() > endDate.getDate()
-        || nowDate.getMonth() > endDate.getMonth()
-        || nowDate.getFullYear() > endDate.getFullYear()
-        || nowDate.getHours() > endDate.getHours()
+      const startDate = new Date(article.dateStart)
 
-      if (!checkDate) {
-        let checked = false
-        article.checked.forEach(name => name == username ? checked = true : "")
-        const gifts = article.content
+      const checkStartDate =
+        nowDate.getDate() >= startDate.getDate() &&
+        nowDate.getMonth() >= startDate.getMonth() &&
+        nowDate.getFullYear() >= startDate.getFullYear() &&
+        nowDate.getHours() >= startDate.getHours()
 
-        if (!checked) {
-          sendMsg(ctx, `
+      if (checkStartDate) {
+        const endDate = new Date(article.dateEnd)
+
+        const checkEndDate =
+          nowDate.getDate() > endDate.getDate() ||
+          nowDate.getMonth() > endDate.getMonth() ||
+          nowDate.getFullYear() > endDate.getFullYear() ||
+          nowDate.getHours() >= endDate.getHours()
+
+        if (!checkEndDate) {
+          let checked = false
+          article.checked.forEach(name => name == username ? checked = true : "")
+          const gifts = article.content
+
+          if (!checked) {
+            article.checked.push(username)
+            await contests.updateOne({ _id: article._id }, { $set: { checked: article.checked } })
+
+            return `
 Привет, <b>${username}</b>!
 Начался новый конкурс!
 Призы: ${formatGifts(gifts)}.
 Чтобы участвовать, введи /go.
-          `)
-
-          article.checked.push(username)
-          await contests.updateOne({ _id: article._id }, { $set: { checked: article.checked } })
+            `
+          } else {
+            return `На данный момент конкурсов нет`
+          }
+        } else {
+          contests.deleteOne({ _id: article._id })
+          return `На данный момент конкурсов нет`
         }
+      } else {
+        return `Скоро будет конкурс :)`
       }
+    } else {
+      return `На данный момент конкурсов нет`
     }
   }
 
-  setTimeout(checker, 10000, ctx)
+  return ``
 }
 
 function formatGifts(gifts) {

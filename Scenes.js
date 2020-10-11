@@ -34,7 +34,8 @@ class SceneGen {
         await users.insertOne({
           userId,
           username,
-          collectedCards
+          collectedCards,
+          win: false
         })
 
         sendMsg(ctx, `Ожидай конкурсов.`)
@@ -57,27 +58,39 @@ async function checker(ctx) {
 
     if (article) {
       const nowDate = new Date()
-      const endDate = new Date(article.dateEnd)
-      const checkDate = nowDate.getDate() > endDate.getDate()
-        || nowDate.getMonth() > endDate.getMonth()
-        || nowDate.getFullYear() > endDate.getFullYear()
-        || nowDate.getHours() > endDate.getHours()
+      const startDate = new Date(article.dateStart)
 
-      if (!checkDate) {
-        let checked = false
-        article.checked.forEach(name => name == username ? checked = true : "")
-        const gifts = article.content
+      const checkStartDate =
+        nowDate.getDate() >= startDate.getDate() &&
+        nowDate.getMonth() >= startDate.getMonth() &&
+        nowDate.getFullYear() >= startDate.getFullYear() &&
+        nowDate.getHours() >= startDate.getHours()
 
-        if (!checked) {
-          sendMsg(ctx, `
+      if (checkStartDate) {
+        const endDate = new Date(article.dateEnd)
+
+        const checkEndDate =
+          nowDate.getDate() > endDate.getDate() ||
+          nowDate.getMonth() > endDate.getMonth() ||
+          nowDate.getFullYear() > endDate.getFullYear() ||
+          nowDate.getHours() >= endDate.getHours()
+
+        if (!checkEndDate) {
+          let checked = false
+          article.checked.forEach(name => name == username ? checked = true : "")
+          const gifts = article.content
+
+          if (!checked) {
+            sendMsg(ctx, `
 Привет, <b>${username}</b>!
 Начался новый конкурс!
 Призы: ${formatGifts(gifts)}.
 Чтобы участвовать, введи /go.
           `)
 
-          article.checked.push(username)
-          await contests.updateOne({ _id: article._id }, { $set: { checked: article.checked } })
+            article.checked.push(username)
+            await contests.updateOne({ _id: article._id }, { $set: { checked: article.checked } })
+          }
         }
       }
     }
